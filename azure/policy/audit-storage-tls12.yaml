@@ -1,0 +1,20 @@
+properties:
+  displayName: Audit minimum TLS 1.2 for Azure Storage accounts
+  policyType: Custom
+  mode: Indexed
+  description: >-
+    Audits Azure Storage accounts whose minimum TLS version is not TLS 1.2.
+    This policy reports findings and doesn't block resource changes.
+  metadata:
+    version: 1.0.0
+    category: Storage
+    deploymentTier: Universal audit
+  policyRule:
+    if:
+      allOf:
+        - field: type
+          equals: Microsoft.Storage/storageAccounts
+        - field: Microsoft.Storage/storageAccounts/minimumTlsVersion
+          notEquals: TLS1_2
+    then:
+      effect: audit

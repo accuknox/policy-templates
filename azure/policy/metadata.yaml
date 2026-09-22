@@ -1,0 +1,340 @@
+---
+version: v0.3.0
+policyRules:
+  - name: require-key-vault-soft-delete
+    kind: azure-policy
+    severity: 5
+    apiVersion: "2023-04-01"
+    precondition:
+      - AZURE_POLICY
+      - AZURE_KEY_VAULT
+    description:
+      refs:
+        - name: Microsoft built-in - Key vaults should have soft delete enabled
+          url:
+            - https://github.com/Azure/azure-policy/blob/master/built-in-policies/policyDefinitions/Key%20Vault/SoftDeleteMustBeEnabled_Audit.json
+        - name: Azure Key Vault recovery management
+          url:
+            - https://learn.microsoft.com/azure/key-vault/general/key-vault-recovery
+      tldr: Prevent creation or update of Key Vaults without soft delete.
+      detailed: >-
+        Requires recoverable deletion for Key Vaults and their objects, while
+        exempting vault recovery requests. New Key Vaults enable soft delete by
+        default, and the setting cannot be disabled after it is enabled. This
+        definition fixes the equivalent Microsoft built-in policy to Deny.
+    spec:
+      generic:
+        properties:
+          displayName: Require soft delete for Azure Key Vault
+          policyType: Custom
+          mode: Indexed
+          description: >-
+            Denies creation or update of Azure Key Vault resources without soft
+            delete, while allowing recovery of a previously deleted vault.
+          metadata:
+            version: 1.0.0
+            category: Key Vault
+            deploymentTier: Universal
+            basedOnBuiltInPolicyDefinitionId: 1e66c121-a66a-4b1f-9b83-0fd99bf0fc2d
+            basedOnBuiltInVersion: 3.1.0
+          policyRule:
+            if:
+              allOf:
+                - field: type
+                  equals: Microsoft.KeyVault/vaults
+                - not:
+                    field: Microsoft.KeyVault/vaults/createMode
+                    equals: recover
+                - anyOf:
+                    - field: Microsoft.KeyVault/vaults/enableSoftDelete
+                      equals: "false"
+                    - field: Microsoft.KeyVault/vaults/enableSoftDelete
+                      exists: "false"
+            then:
+              effect: deny
+  - name: audit-public-blob-access
+    kind: azure-policy
+    severity: 5
+    apiVersion: "2023-04-01"
+    precondition:
+      - AZURE_POLICY
+      - AZURE_STORAGE
+    description:
+      refs:
+        - name: Prevent anonymous read access to Azure Storage data
+          url:
+            - https://learn.microsoft.com/azure/storage/blobs/anonymous-read-access-prevent
+      tldr: Audit Storage accounts that permit anonymous blob access.
+      detailed: >-
+        Reports Storage accounts where account-level anonymous blob access is
+        permitted. Public websites and datasets can be legitimate, so review
+        findings before applying the equivalent deny policy.
+    spec:
+      generic:
+        properties:
+          displayName: Audit anonymous public blob access on Storage accounts
+          policyType: Custom
+          mode: Indexed
+          description: >-
+            Audits Azure Storage accounts that permit account-level anonymous
+            blob access. This policy reports findings and doesn't block resource
+            changes.
+          metadata:
+            version: 1.0.0
+            category: Storage
+            deploymentTier: Universal audit
+          policyRule:
+            if:
+              allOf:
+                - field: type
+                  equals: Microsoft.Storage/storageAccounts
+                - field: Microsoft.Storage/storageAccounts/allowBlobPublicAccess
+                  notEquals: false
+            then:
+              effect: audit
+  - name: audit-storage-tls12
+    kind: azure-policy
+    severity: 5
+    apiVersion: "2023-04-01"
+    precondition:
+      - AZURE_POLICY
+      - AZURE_STORAGE
+    description:
+      refs:
+        - name: Enforce a minimum TLS version for Azure Storage
+          url:
+            - https://learn.microsoft.com/azure/storage/common/transport-layer-security-configure-minimum-version
+      tldr: Audit Storage accounts that don't require TLS 1.2.
+      detailed: >-
+        Reports Storage accounts whose minimum TLS version is below TLS 1.2.
+        Legacy clients may explain findings and should be migrated before an
+        equivalent deny policy is assigned.
+    spec:
+      generic:
+        properties:
+          displayName: Audit minimum TLS 1.2 for Azure Storage accounts
+          policyType: Custom
+          mode: Indexed
+          description: >-
+            Audits Azure Storage accounts whose minimum TLS version is not TLS
+            1.2. This policy reports findings and doesn't block resource changes.
+          metadata:
+            version: 1.0.0
+            category: Storage
+            deploymentTier: Universal audit
+          policyRule:
+            if:
+              allOf:
+                - field: type
+                  equals: Microsoft.Storage/storageAccounts
+                - field: Microsoft.Storage/storageAccounts/minimumTlsVersion
+                  notEquals: TLS1_2
+            then:
+              effect: audit
+  - name: audit-app-service-https
+    kind: azure-policy
+    severity: 5
+    apiVersion: "2023-04-01"
+    precondition:
+      - AZURE_POLICY
+      - AZURE_APP_SERVICE
+    description:
+      refs:
+        - name: Azure Policy built-ins for App Service
+          url:
+            - https://learn.microsoft.com/azure/app-service/policy-reference
+      tldr: Audit App Service applications without HTTPS-only access.
+      detailed: >-
+        Reports App Service and function applications that don't enable
+        HTTPS-only access. Review clients, probes, callbacks, custom domains,
+        and deployment slots before applying an equivalent deny policy.
+    spec:
+      generic:
+        properties:
+          displayName: Audit HTTPS-only access for App Service applications
+          policyType: Custom
+          mode: Indexed
+          description: >-
+            Audits App Service applications, including function applications,
+            when HTTPS-only access is not enabled. This policy doesn't block
+            changes.
+          metadata:
+            version: 1.0.0
+            category: App Service
+            deploymentTier: Universal audit
+          policyRule:
+            if:
+              allOf:
+                - field: type
+                  equals: Microsoft.Web/sites
+                - field: Microsoft.Web/sites/httpsOnly
+                  notEquals: true
+            then:
+              effect: audit
+  - name: audit-nic-ip-forwarding
+    kind: azure-policy
+    severity: 5
+    apiVersion: "2023-04-01"
+    precondition:
+      - AZURE_POLICY
+      - AZURE_NETWORK
+    description:
+      refs:
+        - name: Azure network interface IP forwarding
+          url:
+            - https://learn.microsoft.com/azure/virtual-network/virtual-network-network-interface#enable-or-disable-ip-forwarding
+      tldr: Audit network interfaces that enable IP forwarding.
+      detailed: >-
+        Reports network interfaces with IP forwarding enabled. Network virtual
+        appliances, firewalls, and routers can be legitimate findings and can
+        be exempted before using the equivalent deny policy.
+    spec:
+      generic:
+        properties:
+          displayName: Audit IP forwarding on network interfaces
+          policyType: Custom
+          mode: Indexed
+          description: >-
+            Audits network interfaces that enable IP forwarding. Approved
+            network appliances can be reviewed or exempted without blocking
+            their deployment.
+          metadata:
+            version: 1.0.0
+            category: Network
+            deploymentTier: Universal audit
+          policyRule:
+            if:
+              allOf:
+                - field: type
+                  equals: Microsoft.Network/networkInterfaces
+                - field: Microsoft.Network/networkInterfaces/enableIPForwarding
+                  equals: true
+            then:
+              effect: audit
+  - name: audit-public-ip-on-network-interfaces
+    kind: azure-policy
+    severity: 5
+    apiVersion: "2023-04-01"
+    precondition:
+      - AZURE_POLICY
+      - AZURE_NETWORK
+    description:
+      refs:
+        - name: Azure Policy built-ins for Azure Virtual Network
+          url:
+            - https://learn.microsoft.com/azure/virtual-network/policy-reference
+      tldr: Audit direct public IP associations on network interfaces.
+      detailed: >-
+        Reports network interfaces whose IP configurations reference a public
+        IP. Review approved internet-facing and appliance workloads before
+        applying the equivalent deny policy.
+    spec:
+      generic:
+        properties:
+          displayName: Audit public IP addresses on network interfaces
+          policyType: Custom
+          mode: Indexed
+          description: >-
+            Audits network interfaces that directly associate a public IP
+            address. This policy reports findings and doesn't block approved
+            public workloads.
+          metadata:
+            version: 1.0.0
+            category: Network
+            deploymentTier: Universal audit
+          policyRule:
+            if:
+              allOf:
+                - field: type
+                  equals: Microsoft.Network/networkInterfaces
+                - count:
+                    field: Microsoft.Network/networkInterfaces/ipconfigurations[*]
+                    where:
+                      field: Microsoft.Network/networkInterfaces/ipconfigurations[*].publicIpAddress.id
+                      exists: true
+                  greater: 0
+            then:
+              effect: audit
+  - name: audit-key-vault-purge-protection
+    kind: azure-policy
+    severity: 5
+    apiVersion: "2023-04-01"
+    precondition:
+      - AZURE_POLICY
+      - AZURE_KEY_VAULT
+    description:
+      refs:
+        - name: Azure Policy built-ins for Key Vault
+          url:
+            - https://learn.microsoft.com/azure/key-vault/policy-reference
+      tldr: Audit Key Vault resources without purge protection.
+      detailed: >-
+        Reports vaults without purge protection. Review retention, recovery,
+        and early-deletion requirements before applying the equivalent deny
+        policy because purge protection changes lifecycle behavior.
+    spec:
+      generic:
+        properties:
+          displayName: Audit purge protection for Azure Key Vault
+          policyType: Custom
+          mode: Indexed
+          description: >-
+            Audits Key Vault resources that don't enable purge protection. This
+            policy reports findings without changing vault retention or deletion
+            behavior.
+          metadata:
+            version: 1.0.0
+            category: Key Vault
+            deploymentTier: Universal audit
+          policyRule:
+            if:
+              allOf:
+                - field: type
+                  equals: Microsoft.KeyVault/vaults
+                - field: Microsoft.KeyVault/vaults/enablePurgeProtection
+                  notEquals: true
+            then:
+              effect: audit
+  - name: require-storage-secure-transfer
+    kind: azure-policy
+    severity: 5
+    apiVersion: "2023-04-01"
+    precondition:
+      - AZURE_POLICY
+      - AZURE_STORAGE
+    description:
+      refs:
+        - name: Require secure transfer for Azure Storage
+          url:
+            - https://learn.microsoft.com/azure/storage/common/storage-require-secure-transfer
+        - name: Azure Policy built-ins for Storage
+          url:
+            - https://learn.microsoft.com/azure/storage/common/policy-reference
+      tldr: Deny Azure Storage accounts that permit insecure transport.
+      detailed: >-
+        Requires the secure-transfer property on every Azure Storage account.
+        The control is portable across subscriptions and management groups and
+        requires no resource names, locations, identities, networks, or workload
+        history. Azure enables this setting by default for new storage accounts.
+    spec:
+      generic:
+        properties:
+          displayName: Require secure transfer for Azure Storage accounts
+          policyType: Custom
+          mode: Indexed
+          description: >-
+            Denies creation or update of Azure Storage accounts that do not
+            require secure transport for supported data-plane protocols.
+          metadata:
+            version: 1.0.0
+            category: Storage
+            deploymentTier: Universal
+          policyRule:
+            if:
+              allOf:
+                - field: type
+                  equals: Microsoft.Storage/storageAccounts
+                - field: Microsoft.Storage/storageAccounts/supportsHttpsTrafficOnly
+                  notEquals: true
+            then:
+              effect: deny

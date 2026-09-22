@@ -1,0 +1,20 @@
+properties:
+  displayName: Audit anonymous public blob access on Storage accounts
+  policyType: Custom
+  mode: Indexed
+  description: >-
+    Audits Azure Storage accounts that permit account-level anonymous blob
+    access. This policy reports findings and doesn't block resource changes.
+  metadata:
+    version: 1.0.0
+    category: Storage
+    deploymentTier: Universal audit
+  policyRule:
+    if:
+      allOf:
+        - field: type
+          equals: Microsoft.Storage/storageAccounts
+        - field: Microsoft.Storage/storageAccounts/allowBlobPublicAccess
+          notEquals: false
+    then:
+      effect: audit

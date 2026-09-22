@@ -1,0 +1,28 @@
+properties:
+  displayName: Require soft delete for Azure Key Vault
+  policyType: Custom
+  mode: Indexed
+  description: >-
+    Denies creation or update of Azure Key Vault resources without soft delete,
+    while allowing recovery of a previously deleted vault.
+  metadata:
+    version: 1.0.0
+    category: Key Vault
+    deploymentTier: Universal
+    basedOnBuiltInPolicyDefinitionId: 1e66c121-a66a-4b1f-9b83-0fd99bf0fc2d
+    basedOnBuiltInVersion: 3.1.0
+  policyRule:
+    if:
+      allOf:
+        - field: type
+          equals: Microsoft.KeyVault/vaults
+        - not:
+            field: Microsoft.KeyVault/vaults/createMode
+            equals: recover
+        - anyOf:
+            - field: Microsoft.KeyVault/vaults/enableSoftDelete
+              equals: "false"
+            - field: Microsoft.KeyVault/vaults/enableSoftDelete
+              exists: "false"
+    then:
+      effect: deny
