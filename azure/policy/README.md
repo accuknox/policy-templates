@@ -31,5 +31,3 @@ noncompliance. It doesn't mean every finding is forbidden. Review findings for
 legitimate public workloads, network appliances, legacy clients, and documented
 recovery requirements before promoting an equivalent control to `deny`.
 
-Conditional and strict opt-in deny controls are maintained in
-[`../policy2`](../policy2).

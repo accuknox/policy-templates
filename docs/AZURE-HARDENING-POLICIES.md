@@ -21,12 +21,10 @@ Policy definition has no effect until an assignment exists.
 - **Universal audit:** safe to assign broadly without behavioral data because it
   only reports noncompliance. A finding can still represent an approved design
   and must be reviewed before the equivalent preventive policy is enabled.
-- **Conditional:** broadly useful after a documented feature, compatibility, or
-  architecture prerequisite is verified.
-- **Strict opt-in:** imposes a strong lifecycle or recovery restriction and needs
-  explicit customer acceptance plus an exemption or break-glass process.
 
 ## Current catalog
+
+This release contains only the eight universal policies listed below.
 
 | Policy | Tier | Reason |
 | --- | --- | --- |
@@ -38,13 +36,6 @@ Policy definition has no effect until an assignment exists.
 | Audit NIC IP forwarding | Universal audit | Reports forwarding while leaving legitimate virtual appliances and routers operational |
 | Audit public IPs on NICs | Universal audit | Reports direct internet exposure without blocking approved public workloads |
 | Audit Key Vault purge protection | Universal audit | Reports missing protection without changing retention or deletion behavior |
-| Prevent anonymous public blob access | Conditional | Public websites or download workflows can legitimately require anonymous access |
-| Require Storage TLS 1.2 | Conditional | Legacy clients using TLS 1.0 or 1.1 can fail |
-| Require App Service HTTPS-only | Conditional | Existing clients, probes, callbacks, or deployment slots can require migration |
-| Disable NIC IP forwarding | Conditional | Network virtual appliances and routers require forwarding |
-| Prevent public IPs on NICs | Conditional | Some internet-facing systems and appliances require direct public IP addresses |
-| Require Key Vault purge protection | Conditional | Retention prevents early permanent deletion and changes vault lifecycle operations |
-| Prevent Key Vault deletion | Strict opt-in | Legitimate deletion and resource-group retirement are blocked until exemption or policy removal |
 
 ## Important operational behavior
 
@@ -52,14 +43,12 @@ Policy definition has no effect until an assignment exists.
   automatically repair existing resources.
 - The `audit` effect creates compliance findings but doesn't block or modify the
   evaluated resource.
-- The `denyAction` effect can block deletion and resource-group cascade deletion.
 - Assignments can include exclusions and policy exemptions for approved cases.
 
 ## Catalog layout
 
 - `azure/policy`: 2 universal preventive policies and 6 universal audit
   policies.
-- `azure/policy2`: 6 conditional preventive policies and 1 strict opt-in policy.
 
 ## References
 
@@ -67,7 +56,6 @@ Policy definition has no effect until an assignment exists.
 - [Azure Policy definition structure](https://learn.microsoft.com/azure/governance/policy/concepts/definition-structure)
 - [Azure Policy deny effect](https://learn.microsoft.com/azure/governance/policy/concepts/effect-deny)
 - [Azure Policy audit effect](https://learn.microsoft.com/azure/governance/policy/concepts/effect-audit)
-- [Azure Policy denyAction effect](https://learn.microsoft.com/azure/governance/policy/concepts/effect-deny-action)
 - [Azure Storage secure transfer](https://learn.microsoft.com/azure/storage/common/storage-require-secure-transfer)
 - [Azure Storage anonymous-access prevention](https://learn.microsoft.com/azure/storage/blobs/anonymous-read-access-prevent)
 - [Azure Key Vault recovery management](https://learn.microsoft.com/azure/key-vault/general/key-vault-recovery)
