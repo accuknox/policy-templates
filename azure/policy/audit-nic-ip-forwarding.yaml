@@ -1,0 +1,20 @@
+properties:
+  displayName: Audit IP forwarding on network interfaces
+  policyType: Custom
+  mode: Indexed
+  description: >-
+    Audits network interfaces that enable IP forwarding. Approved network
+    appliances can be reviewed or exempted without blocking their deployment.
+  metadata:
+    version: 1.0.0
+    category: Network
+    deploymentTier: Universal audit
+  policyRule:
+    if:
+      allOf:
+        - field: type
+          equals: Microsoft.Network/networkInterfaces
+        - field: Microsoft.Network/networkInterfaces/enableIPForwarding
+          equals: true
+    then:
+      effect: audit
