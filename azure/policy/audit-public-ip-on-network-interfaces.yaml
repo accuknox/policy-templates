@@ -1,0 +1,24 @@
+properties:
+  displayName: Audit public IP addresses on network interfaces
+  policyType: Custom
+  mode: Indexed
+  description: >-
+    Audits network interfaces that directly associate a public IP address.
+    This policy reports findings and doesn't block approved public workloads.
+  metadata:
+    version: 1.0.0
+    category: Network
+    deploymentTier: Universal audit
+  policyRule:
+    if:
+      allOf:
+        - field: type
+          equals: Microsoft.Network/networkInterfaces
+        - count:
+            field: Microsoft.Network/networkInterfaces/ipconfigurations[*]
+            where:
+              field: Microsoft.Network/networkInterfaces/ipconfigurations[*].publicIpAddress.id
+              exists: true
+          greater: 0
+    then:
+      effect: audit
